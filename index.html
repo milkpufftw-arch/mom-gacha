@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>媽咪生存意志扭蛋機</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <style>
+      /* 一些基本動畫設定 */
+      @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+      .animate-in { animation: fade-in 0.5s ease-out; }
+    </style>
+  </head>
+  <body class="bg-gray-50">
+    <div id="root"></div>
+
+    <script type="text/babel">
+      const { useState, useEffect, useMemo, useRef } = React;
+
+      // --- 圖示組件 ---
+      const Icon = ({ path, color = "currentColor", size = 24, className = "" }) => (
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width={size}
+          height={size}
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke={color}
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className={className}
+        >
+          {path}
+        </svg>
+      );
+
+      const Icons = {
+        Brain: props => (
+          <Icon
+            {...props}
+            path={
+              <path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 4.44-4zM14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-4.44-4z" />
+            }
+          />
+        ),
+        Heart: props => (
+          <Icon
+            {...props}
+            path={
+              <path d="M19 14c1.49-1.28 3.6-2.93 3.33-5.38-.13-1.15-.84-2.14-1.99-2.61-2.02-.82-4.38.74-5.84 2.5C13.04 6.75 10.68 5.19 8.66 6.01 7.51 6.48 6.8 7.47 6.67 8.62c-.27 2.45 1.84 4.1 3.33 5.38 2.65 2.29 4.8 4.3 6.94 6.78 2.15-2.48 4.3-4.5 6.94-6.78z" />
+            }
+          />
+        ),
+        Activity: props => (
+          <Icon
+            {...props}
+            path={<polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />}
+          />
+        ),
+        Eye: props => (
+          <Icon
+            {...props}
+            path={
+              <>
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                <circle cx="12" cy="12" r="3" />
+              </>
+            }
+          />
+        ),
+        Shield: props => (
+          <Icon
+            {...props}
+            path={<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />}
+          />
+        ),
+        Wine: props => (
+          <Icon
+            {...props}
+            path={
+              <>
+                <path d="M8 22h8" />
+                <path d="M7 10h10" />
+                <path d="M12 15v7" />
+                <path d="M12 15a5 5 0 0 0 5-5c0-2-.5-4-2-8H9c-1.5 4-2 6-2 8a5 5 0 0 0 5 5z" />
+              </>
+            }
+          />
+        ),
+        Shuffle: props => (
+          <Icon
+            {...props}
+            path={
+              <>
+                <polyline points="16 3 21 3 21 8" />
+                <line x1="4" y1="20" x2="21" y2="3" />
+                <polyline points="21 16 21 21 16 21" />
+                <line x1="15" y1="15" x2="21" y2="21" />
+                <line x1="4" y1="4" x2="9" y2="9" />
+              </>
+            }
+          />
+        ),
+        RefreshCw: props => (
+          <Icon
+            {...props}
+            path={
+              <>
+                <path d="M23 4v6h-6" />
+                <path d="M1 20v-6h6" />
+                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
+              </>
+            }
+          />
+        ),
+        ChevronRight: props => (
+          <Icon {...props} path={<polyline points="9 18 15 12 9 6" />} />
+        ),
+        Play: props => (
+          <Icon {...props} path={<polygon points="5 3 19 12 5 21 5 3" />} />
+        ),
+        Upload: props => (
+          <Icon
+            {...props}
+            path={
+              <>
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="17 8 12 3 7 8" />
+                <line x1="12" y1="3" x2="12" y2="15" />
+              </>
+            }
+          />
+        ),
+        Share: props => (
+          <Icon
+            {...props}
+            path={
+              <>
+                <circle cx="18" cy="5" r="3" />
+                <circle cx="6" cy="12" r="3" />
+                <circle cx="18" cy="19" r="3" />
+                <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+                <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+              </>
+            }
+          />
+        ),
+      };
+
+      function App() {
+        const [step, setStep] = useState(0);
+        const [selectedChild, setSelectedChild] = useState(null);
+        const [selectedState, setSelectedState] = useState(null);
+        const [currentTip, setCurrentTip] = useState(null);
+        const [isAnimating, setIsAnimating] = useState(false);
+        const [displayedChecks, setDisplayedChecks] = useState({
+          body: [],
+          emotion: [],
+          brain: [],
+        });
+        const [checkedCount, setCheckedCount] = useState(0);
+        const [showToast, setShowToast] = useState(false);
+
+        // --- 圖片設定 ---
+        const driveImageId = "1zbO02DurlPSmMLnipgPxp3fqrWtcLoWt";
+        const stableDriveLink = `https://lh3.googleusercontent.com/d/$${driveImageId}`;
+
+        const [userImage, setUserImage] = useState(stableDriveLink);
+        const fileInputRef = useRef(null);
+
+        // --- 資料庫 ---
+        const childTypes = [
+          { id: 1, name: "幕後黑手", desc: "安靜但眼神銳利，感覺正在計畫如何統治家裡。" },
+          { id: 2, name: "十萬個為什麼", desc: "對洗澡沒興趣，但對水管構造很有興趣，會把妳問倒。" },
+          { id: 3, name: "穿尿布的暴君", desc: "天生的老闆，命令妳拿牛奶的口氣像在叫工讀生。" },
+          { id: 4, name: "頂嘴律師", desc: "黑的能說成白的，明明是他亂畫牆壁，最後變成是牆壁的錯。" },
+          { id: 5, name: "讀心術士", desc: "眼神深邃，妳還沒生氣他就先哭了，讓妳罪惡感爆棚。" },
+          { id: 6, name: "玻璃心詩人", desc: "活在自己的夢幻泡泡裡，叫他穿鞋要叫十次才聽見。" },
+          { id: 7, name: "邪教教主", desc: "魅力十足，全家長輩都被他收買，只有妳知道他的真面目。" },
+          { id: 8, name: "失控的煙火", desc: "熱情奔放，上一秒大笑下一秒大哭，家裡永遠像被炸過。" },
+          { id: 9, name: "糾察隊長", desc: "餅乾一定要擺整齊，順序不對就崩潰，比婆婆還難搞。" },
+          { id: 10, name: "強力膠無尾熊", desc: "超級黏人，妳去廁所他也要在門口守護妳。" },
+          { id: 11, name: "風紀股長", desc: "不但管自己，還管妳幾點睡覺、管爸爸襪子亂丟。" },
+          { id: 12, name: "里長伯", desc: "只要有人來家裡他就人來瘋，不睡覺一直社交。" },
+          { id: 13, name: "破壞王工程師", desc: "玩具拿到手五分鐘必定解體，擅長物理攻擊。" },
+          { id: 14, name: "高敏藝術家", desc: "這件衣服不穿、那個標籤會刺，感官極度敏感。" },
+          { id: 15, name: "極限運動員", desc: "沙發是用來跳的，地板是用來滑的，妳的心臟是用來嚇的。" },
+          { id: 16, name: "奧斯卡影帝", desc: "一點小傷口可以演得像截肢，情緒張力滿點。" },
+        ];
+
+        const momStates = [
+          { id: 1, level: "hyper", name: "核爆現場", icon: "🔥", desc: "理智線全斷，只想毀滅世界，誰來講話都想咬人。", color: "bg-red-600 text-white" },
+          { id: 2, level: "hyper", name: "活火山", icon: "🌋", desc: "還沒爆，但頭頂在冒煙，拳頭硬硬的，隨時準備開戰。", color: "bg-orange-600 text-white" },
+          { id: 3, level: "hyper", name: "焦慮蜂鳥", icon: "🐝", desc: "心跳很快，一直碎碎念，覺得事情做不完，停不下來。", color: "bg-yellow-400 text-yellow-900" },
+          { id: 4, level: "optimal", name: "走鋼索的人", icon: "🧗", desc: "搖搖欲墜，還在硬撐，只要再一次尖叫就會掉下去。", color: "bg-green-400 text-green-900" },
+          { id: 5, level: "optimal", name: "修行的師姐", icon: "🧘", desc: "心如止水(暫時)，看破紅塵，覺得孩子只是來討債的。", color: "bg-green-600 text-white" },
+          { id: 6, level: "hypo", name: "自動導航機器人", icon: "🤖", desc: "無感，身體在動但靈魂不在，機械式地回應「喔、好、不行」。", color: "bg-blue-500 text-white" },
+          { id: 7, level: "hypo", name: "融化的史萊姆", icon: "🫠", desc: "無力，只想躺平，地板看起來好舒服，不想動也不想說話。", color: "bg-indigo-400 text-white" },
+          { id: 8, level: "hypo", name: "結凍的化石", icon: "🗿", desc: "大腦當機，完全無法思考，看著孩子鬧但做不出反應。", color: "bg-gray-600 text-white" },
+        ];
+
+        const awarenessChecks = useMemo(
+          () => [
+            { cat: "body", text: "妳的肩膀現在是聳起來的嗎？放下它。" },
+            { cat: "body", text: "妳的牙關是不是咬得很緊？把下巴鬆開。" },
+            { cat: "body", text: "妳現在呼吸是停滯的嗎？吐一口氣。" },
+            { cat: "body", text: "妳的眉頭是不是皺在一起？" },
+            { cat: "body", text: "感覺一下腳底踩在地板的觸感。" },
+            { cat: "body", text: "妳是不是口渴了？還是餓了？" },
+            { cat: "body", text: "手掌是握拳的嗎？試著把手指張開。" },
+            { cat: "body", text: "現在眼神是聚焦的，還是散渙的？" },
+            { cat: "body", text: "胃是不是覺得緊緊的、或是想吐？" },
+            { cat: "emotion", text: "胸口那團悶悶的感覺是什麼顏色？" },
+            { cat: "emotion", text: "妳現在覺得委屈嗎？(那很正常)" },
+            { cat: "emotion", text: "如果憤怒是一隻動物，現在牠長什麼樣子？" },
+            { cat: "emotion", text: "腦中是否浮現「只有我在努力」的感覺？" },
+            { cat: "emotion", text: "允許自己現在就是不喜歡這個孩子。" },
+            { cat: "emotion", text: "那股想哭的感覺，可以讓它流出來嗎？" },
+            { cat: "emotion", text: "妳現在是想「逃跑」還是想「戰鬥」？" },
+            { cat: "emotion", text: "是不是覺得自己很孤單，沒人懂妳？" },
+            { cat: "emotion", text: "是否有一種「不想管了、隨便啦」的無力感？" },
+            { cat: "brain", text: "腦中是不是在重播「我不是好媽媽」？" },
+            { cat: "brain", text: "擔心「如果不教他，他以後會完蛋」？(劇透：不會)" },
+            { cat: "brain", text: "妳現在急著解決問題，還是需要先離開現場？" },
+            { cat: "brain", text: "覺得這個崩潰是「針對妳」的嗎？" },
+            { cat: "brain", text: "現在最糟糕的狀況是什麼？其實大家都還活著。" },
+            { cat: "brain", text: "試著把心中的「我必須」改成「我可以選擇」。" },
+            { cat: "brain", text: "停下來，說出眼前三個物品的顏色。" },
+            { cat: "brain", text: "妳現在的念頭是「事實」，還是「想像」？" },
+            { cat: "brain", text: "是不是在想「為什麼別人的小孩都不會這樣」？" },
+          ],
+          []
+        );
+
+        const survivalTips = [
+          "去廁所把門鎖起來，坐著滑手機3分鐘，這是妳的神聖權利。",
+          "喝一杯冰水。物理降溫有助於大腦重新開機。",
+          "戴上降噪耳機。聽不到哭聲，世界就和平了一半。",
+          "吃一顆巧克力。如果一顆不夠，就吃兩顆。",
+          "用力甩手30下，把想打人的能量甩出去。",
+          "看著孩子小時候睡覺的照片，催眠自己他很可愛。",
+          "想像妳是國家地理頻道的攝影師，正在觀察一隻失控的幼獸。",
+          "對著鏡子做鬼臉，越醜越好，騙過大腦放鬆臉部肌肉。",
+          "在心裡默念咒語：「這只是過程，不是結局。」",
+          "打電話給最懂妳的朋友，罵個5分鐘髒話。",
+          "什麼都不要教。今天只要確保大家都有呼吸就好。",
+          "點外送。今天晚上不煮飯了，放過自己。",
+          "用冷水洗臉，感受水的溫度。",
+          "躺在地板上，假裝自己是受害者現場（孩子可能會被嚇到而安靜）。",
+          "深吸氣4秒，憋氣4秒，吐氣8秒。重複三次。",
+          "把這一切寫下來（或打在手機備忘錄），把腦袋裡的垃圾倒出來。",
+          "允許開電視/平板保母。30分鐘的安靜比堅持原則更重要。",
+          "對孩子說：「媽媽現在像哥吉拉一樣生氣，需要暫停。」然後走開。",
+          "聞一聞家裡好聞的味道（咖啡、精油、甚至是洗碗精）。",
+          "去抱一顆枕頭，用力擠壓它。",
+          "想一下這件事五年後還重要嗎？如果不重要，就隨便吧。",
+          "把標準降低。今天有刷牙就是滿分，沒刷牙也死不了。",
+          "對自己說：「我盡力了，我真的盡力了。」",
+          "想像有一個金色的防護罩罩著妳，孩子的尖叫聲彈不進來。",
+          "去陽台或是窗邊，看著天空或是遠方的樹。",
+          "用棉被把自己捲起來，像壽司一樣（加壓能帶來安全感）。",
+          "假裝自己是外星人，第一次來到地球觀察人類育兒。",
+          "唱一首妳喜歡的歌（大聲唱），蓋過孩子的哭聲。",
+          "按摩自己的耳朵，或是輕拍自己的胸口。",
+          "想一件等一下孩子睡著後妳要做爽事（追劇、網購）。",
+          "告訴自己：「他的前額葉還沒長好，他就是個原始人。」",
+          "喝一杯熱茶/熱咖啡，專注在吞嚥的感覺。",
+          "把燈關暗一點。太亮的環境會增加焦慮。",
+          "給孩子一個擁抱（有時候這能讓彼此的神經系統同步冷靜）。",
+          "如果真的受不了，就跟著孩子一起哭。嚇嚇他也好。",
+          "去洗個熱水澡，想像水流沖走身上的負能量。",
+          "站起來走動走動，不要一直坐著或蹲著。",
+          "數數。從100倒數回來，7個7個數（100, 93, 86...）強制大腦切換。",
+          "承認妳現在很討厭這一切。這不代表妳不愛孩子。",
+          "想像妳最喜歡的偶像或是智者，如果是他會怎麼做？",
+          "摸摸家裡的寵物，或是摸摸軟軟的毛毯。",
+          "把這當成一個笑話，想著以後怎麼跟朋友講這段荒謬的故事。",
+          "檢查自己是不是生理期快來了？如果是，那一切都合理了。",
+          "給自己設一個停損點：「再撐10分鐘就好。」",
+          "如果孩子在安全範圍，戴上耳塞，無視他10分鐘。",
+          "喝一杯含糖飲料。去他的減肥。",
+          "做十個開合跳。",
+          "對自己說：「我不需要當完美媽媽，我只要當『夠好』的媽媽。」",
+          "原諒剛剛失控的自己。妳也是人，也會累。",
+          "如果真的不行，尋求專業協助是勇敢的表現，不是失敗。",
+          "把孩子丟給爸爸（或電視），這叫『分散投資風險』，不要把雞蛋都放在自己這個籃子裡。",
+          "想像妳是正在渡劫的上神，這隻神獸是來助妳飛升的。忍過去，妳就成仙了。",
+          "看著滿地的玩具，跨過去就好。那是當代前衛裝置藝術，不要破壞它。",
+          "如果今天妳只剩下一口氣，就留著用來呼吸，不要用來罵人。活著比較重要。",
+          "妳的價值不取決於家裡地板的乾淨程度。亂就亂吧，反正明天還是會亂。",
+          "喝一口珍奶（全糖），告訴自己這是『液體抗憂鬱劑』，這是為了家庭和諧而喝。",
+          "現在閉上眼睛，想像妳在夏威夷海灘...好，睜開眼，繼續洗碗，至少心靈已經度過假了。",
+          "把心裡的『我應該』全部改成『我不爽』，誠實面對自己的黑暗面，妳會覺得舒坦很多。",
+          "孩子還活著？妳還活著？房子沒燒掉？恭喜！今日任務圓滿達成，給自己掌聲鼓勵。",
+          "對著鏡子裡的瘋婆子說：『辛苦了，雖然妳現在看起來很糟，但其實挺可愛的。』",
+        ];
+
+        useEffect(() => {
+          if (step === 3) {
+            shuffleCategory("body");
+            shuffleCategory("emotion");
+            shuffleCategory("brain");
+            setCheckedCount(0);
+          }
+        }, [step]);
+
+        const shuffleCategory = category => {
+          const items = awarenessChecks.filter(x => x.cat === category);
+          const shuffled = [...items].sort(() => 0.5 - Math.random());
+          const selected = shuffled.slice(0, 3);
+          setDisplayedChecks(prev => ({
+            ...prev,
+            [category]: selected,
+          }));
+        };
+
+        const handleCheck = e => {
+          if (e.target.checked) {
+            setCheckedCount(prev => prev + 1);
+          } else {
+            setCheckedCount(prev => Math.max(0, prev - 1));
+          }
+        };
+
+        const handleDraw = () => {
+          setIsAnimating(true);
+          setCurrentTip(null);
+          setTimeout(() => {
+            const randomTip =
+              survivalTips[Math.floor(Math.random() * survivalTips.length)];
+            setCurrentTip(randomTip);
+            setIsAnimating(false);
+          }, 1000);
+        };
+
+        const handleImageUpload = e => {
+          const file = e.target.files[0];
+          if (file) {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+              setUserImage(reader.result);
+            };
+            reader.readAsDataURL(file);
+          }
+        };
+
+        const triggerFileInput = () => {
+          fileInputRef.current.click();
+        };
+
+        const handleShare = async () => {
+          const urlToShare = window.location.href;
+          const shareData = {
+            title: "媽咪生存意志扭蛋機",
+            text: "獻給每一個在崩潰邊緣試著深呼吸的妳。這裡不教妳怎麼教小孩，只教妳怎麼活下去。",
+            url: urlToShare,
+          };
+
+          try {
+            if (navigator.share) {
+              await navigator.share(shareData);
+              return;
+            }
+            await navigator.clipboard.writeText(urlToShare);
+            setShowToast(true);
+            setTimeout(() => setShowToast(false), 2500);
+          } catch (err) {
+            try {
+              const textArea = document.createElement("textarea");
+              textArea.value = urlToShare;
+              textArea.style.position = "fixed";
+              textArea.style.left = "-9999px";
+              document.body.appendChild(textArea);
+              textArea.focus();
+              textArea.select();
+              const successful = document.execCommand("copy");
+              document.body.removeChild(textArea);
+
+              if (successful) {
+                setShowToast(true);
+                setTimeout(() => setShowToast(false), 2500);
+              } else {
+                prompt("請手動複製網址：", urlToShare);
+              }
+            } catch (fallbackErr) {
+              prompt("請手動複製網址：", urlToShare);
+            }
+          }
+        };
+
+        const renderWelcome = () => (
+          <div className="flex flex-col items-center justify-center min-h-[80vh] text-center p-6 animate-in fade-in duration-700">
+            <button
+              onClick={handleShare}
+              className="absolute top-4 right-4 p-2 bg-white/50 rounded-full hover:bg-white transition-colors text-gray-500 hover:text-pink-600"
+              title="分享給朋友"
+            >
+              <Icons.Share size={24} />
+            </button>
+
+            <div
+              className="relative mb-8 group cursor-pointer"
+              onClick={triggerFileInput}
+              title="點擊更換妳的厭世大頭貼"
+            >
+              <div className="absolute inset-0 bg-pink-600 rounded-full blur opacity-20 group-hover:opacity-40 transition-opacity animate-pulse"></div>
+              <div className="w-40 h-40 rounded-full border-4 border-gray-900 overflow-hidden bg-white relative z-10 shadow-xl transform group-hover:scale-105 transition-transform duration-300">
+                <img
+                  src={userImage}
+                  alt="厭世媽咪頭像"
+                  className="w-full h-full object-cover"
+                  referrerPolicy="no-referrer"
+                  onError={e => {
+                    e.target.style.display = "none";
+                    e.target.parentNode.classList.add("bg-gray-200");
+                  }}
+                />
+                <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                  <Icons.Upload className="text-white" size={32} />
+                </div>
+              </div>
+
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleImageUpload}
+                accept="image/*"
+                className="hidden"
+              />
+
+              <div className="absolute -top-2 -right-6 bg-white border-2 border-gray-900 px-3 py-1 rounded-xl rounded-bl-none z-20 shadow-lg transform rotate-12 animate-bounce">
+                <span className="font-bold text-gray-900 font-mono">UGH...</span>
+              </div>
+            </div>
+
+            <h1 className="text-4xl font-black text-gray-900 mb-4 tracking-tight leading-tight">
+              媽咪生存意志
+              <br />
+              <span className="text-pink-600 inline-block mt-2">扭蛋機</span>
+            </h1>
+
+            <div className="w-16 h-1 bg-gray-900 mb-6"></div>
+
+            <p className="text-gray-600 mb-8 max-w-xs leading-relaxed font-medium">
+              獻給每一個在崩潰邊緣
+              <br />
+              試著深呼吸的妳。
+              <br />
+              <br />
+              這裡不教妳怎麼教小孩，
+              <br />
+              <span className="text-pink-600 font-bold bg-pink-50 px-1">
+                只教妳怎麼活下去。
+              </span>
+            </p>
+
+            <button
+              onClick={() => {
+                setStep(1);
+                window.scrollTo(0, 0);
+              }}
+              className="group relative inline-flex items-center justify-center px-8 py-4 font-bold text-white transition-all duration-200 bg-gray-900 font-lg rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-900 hover:bg-pink-600 active:scale-95 shadow-xl"
+            >
+              <span className="mr-2">投入理智硬幣</span>
+              <Icons.Play size={20} className="fill-current" />
+              <div className="absolute inset-0 rounded-full ring-2 ring-white/20 group-hover:ring-white/40"></div>
+            </button>
+
+            <p className="mt-6 text-xs text-gray-400">
+              * 100% 幽默成分，不含任何說教
+            </p>
+          </div>
+        );
+
+        const renderStep1 = () => (
+          <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="text-center mb-6">
+              <h2 className="text-2xl font-black text-gray-800">Step 1. 對手圖鑑</h2>
+              <p className="text-pink-600 font-bold text-sm">
+                知己知彼，今天的孩子是哪個品種？
+              </p>
+            </div>
+            <div className="grid grid-cols-2 gap-3 pb-20">
+              {childTypes.map(child => (
+                <button
+                  key={child.id}
+                  onClick={() => {
+                    setSelectedChild(child);
+                    setStep(2);
+                    window.scrollTo(0, 0);
+                  }}
+                  className="bg-white p-3 rounded-xl border-2 border-gray-100 hover:border-pink-500 hover:bg-pink-50 transition-all text-left shadow-sm relative overflow-hidden group"
+                >
+                  <div className="font-bold text-gray-800 text-lg mb-1">
+                    {child.name}
+                  </div>
+                  <div className="text-xs text-gray-500 leading-snug">
+                    {child.desc}
+                  </div>
+                  <div className="absolute -right-2 -bottom-2 opacity-5 text-4xl group-hover:opacity-10 transition-opacity text-pink-500">
+                    👾
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        );
+
+        const renderStep2 = () => (
+          <div className="animate-in fade-in slide-in-from-right duration-500">
+            <button
+              onClick={() => setStep(1)}
+              className="text-gray-400 text-sm mb-4 flex items-center hover:text-pink-600 transition-colors"
+            >
+              ← 重選對手
+            </button>
+            <div className="bg-gray-900 border-l-4 border-pink-500 p-4 rounded-r-lg mb-6 shadow-md text-white">
+              <div className="text-xs text-pink-400 font-bold uppercase">
+                Current Enemy
+              </div>
+              <div className="font-bold text-xl">{selectedChild.name}</div>
+              <div className="text-sm text-gray-300">{selectedChild.desc}</div>
+            </div>
+
+            <div className="text-center mb-6">
+              <h2 className="text-2xl font-black text-gray-800">Step 2. 災情評估</h2>
+              <p className="text-pink-600 font-bold text-sm">
+                誠實面對，妳現在的理智線狀況？
+              </p>
+            </div>
+
+            <div className="space-y-3 pb-20">
+              {momStates.map(state => (
+                <button
+                  key={state.id}
+                  onClick={() => {
+                    setSelectedState(state);
+                    setStep(3);
+                    window.scrollTo(0, 0);
+                  }}
+                  className={`w-full p-4 rounded-xl shadow-sm flex items-center gap-4 transition-transform active:scale-95 text-left border-2 border-transparent hover:border-black ${state.color}`}
+                >
+                  <div className="text-4xl filter drop-shadow-md">{state.icon}</div>
+                  <div>
+                    <div className="font-bold text-lg">{state.name}</div>
+                    <div className="text-xs opacity-90 font-medium">{state.desc}</div>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        );
+
+        const renderStep3 = () => (
+          <div className="animate-in zoom-in duration-500 min-h-[80vh] flex flex-col">
+            <div className="bg-gray-900 text-white p-6 rounded-b-3xl -mx-4 -mt-4 mb-6 shadow-xl relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-pink-600 rounded-full blur-3xl opacity-20 -mr-10 -mt-10"></div>
+              <div className="relative z-10">
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-2xl font-bold flex items-center gap-2">
+                    <Icons.Activity className="text-pink-400" /> 機體掃描
+                  </h2>
+                  <span className="text-xs bg-gray-800 border border-gray-700 px-2 py-1 rounded text-pink-300">
+                    系統自我修復中...
+                  </span>
+                </div>
+                <div className="flex items-start gap-4">
+                  <div className="text-5xl">{selectedState.icon}</div>
+                  <div>
+                    <div className="text-sm opacity-50">當前狀態</div>
+                    <div className="text-xl font-bold text-pink-400">
+                      {selectedState.name}
+                    </div>
+                    <div className="text-sm opacity-75 mt-1">
+                      請花 10 秒鐘，觀察自己...
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex-1 space-y-4 px-2">
+              <div className="mb-2 px-1 text-sm text-pink-600 font-bold">
+                勾選妳有的感覺（沒有也可以直接跳過）：
+              </div>
+
+              {/* Body */}
+              <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm hover:border-pink-300 transition-colors">
+                <div className="flex justify-between items-center mb-3">
+                  <h3 className="font-bold text-gray-800 flex items-center gap-2">
+                    <Icons.Eye size={18} className="text-gray-400" /> 身體 (Body)
+                  </h3>
+                  <button
+                    onClick={() => shuffleCategory("body")}
+                    className="text-xs flex items-center gap-1 text-pink-600 bg-pink-50 px-2 py-1 rounded-full hover:bg-pink-100 transition"
+                  >
+                    <Icons.Shuffle size={12} /> 換一組
+                  </button>
+                </div>
+                <ul className="space-y-3">
+                  {displayedChecks.body.map((item, i) => (
+                    <label
+                      key={i}
+                      className="text-gray-600 text-sm flex gap-3 items-start cursor-pointer hover:bg-slate-50 p-1 rounded transition-colors"
+                    >
+                      <input
+                        type="checkbox"
+                        onChange={handleCheck}
+                        className="mt-1 rounded text-pink-600 focus:ring-pink-600 w-4 h-4 shrink-0 border-gray-300"
+                      />
+                      <span className="leading-snug">{item.text}</span>
+                    </label>
+                  ))}
+                </ul>
+              </div>
+
+              {/* Emotion */}
+              <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm hover:border-pink-300 transition-colors">
+                <div className="flex justify-between items-center mb-3">
+                  <h3 className="font-bold text-gray-800 flex items-center gap-2">
+                    <Icons.Heart size={18} className="text-gray-400" /> 情緒 (Emotion)
+                  </h3>
+                  <button
+                    onClick={() => shuffleCategory("emotion")}
+                    className="text-xs flex items-center gap-1 text-pink-600 bg-pink-50 px-2 py-1 rounded-full hover:bg-pink-100 transition"
+                  >
+                    <Icons.Shuffle size={12} /> 換一組
+                  </button>
+                </div>
+                <ul className="space-y-3">
+                  {displayedChecks.emotion.map((item, i) => (
+                    <label
+                      key={i}
+                      className="text-gray-600 text-sm flex gap-3 items-start cursor-pointer hover:bg-slate-50 p-1 rounded transition-colors"
+                    >
+                      <input
+                        type="checkbox"
+                        onChange={handleCheck}
+                        className="mt-1 rounded text-pink-600 focus:ring-pink-600 w-4 h-4 shrink-0 border-gray-300"
+                      />
+                      <span className="leading-snug">{item.text}</span>
+                    </label>
+                  ))}
+                </ul>
+              </div>
+
+              {/* Brain */}
+              <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm hover:border-pink-300 transition-colors">
+                <div className="flex justify-between items-center mb-3">
+                  <h3 className="font-bold text-gray-800 flex items-center gap-2">
+                    <Icons.Brain size={18} className="text-gray-400" /> 大腦 (Brain)
+                  </h3>
+                  <button
+                    onClick={() => shuffleCategory("brain")}
+                    className="text-xs flex items-center gap-1 text-pink-600 bg-pink-50 px-2 py-1 rounded-full hover:bg-pink-100 transition"
+                  >
+                    <Icons.Shuffle size={12} /> 換一組
+                  </button>
+                </div>
+                <ul className="space-y-3">
+                  {displayedChecks.brain.map((item, i) => (
+                    <label
+                      key={i}
+                      className="text-gray-600 text-sm flex gap-3 items-start cursor-pointer hover:bg-slate-50 p-1 rounded transition-colors"
+                    >
+                      <input
+                        type="checkbox"
+                        onChange={handleCheck}
+                        className="mt-1 rounded text-pink-600 focus:ring-pink-600 w-4 h-4 shrink-0 border-gray-300"
+                      />
+                      <span className="leading-snug">{item.text}</span>
+                    </label>
+                  ))}
+                </ul>
+              </div>
+            </div>
+
+            <button
+              onClick={() => {
+                setStep(4);
+                handleDraw();
+                window.scrollTo(0, 0);
+              }}
+              className={`mt-6 w-full py-4 rounded-xl font-bold text-lg shadow-lg active:scale-95 transition-transform flex items-center justify-center gap-2 mb-8
+                ${
+                  checkedCount === 0
+                    ? "bg-pink-600 text-white"
+                    : "bg-gray-900 text-white"
+                }`}
+            >
+              <span>
+                {checkedCount === 0
+                  ? "以上都沒有（太棒了！），直接領取錦囊"
+                  : `確認 ${checkedCount} 項狀態，領取錦囊`}
+              </span>
+              <Icons.ChevronRight />
+            </button>
+          </div>
+        );
+
+        const renderStep4 = () => (
+          <div className="flex flex-col items-center justify-center min-h-[80vh] animate-in fade-in duration-700">
+            <h2 className="text-xl font-black text-gray-900 mb-6 flex items-center gap-2">
+              <Icons.Shield className="text-pink-600" /> 媽咪生存錦囊
+            </h2>
+
+            {isAnimating ? (
+              <div className="w-64 h-64 bg-gray-100 rounded-full flex items-center justify-center animate-bounce mb-8">
+                <Icons.RefreshCw size={48} className="text-slate-400 animate-spin" />
+              </div>
+            ) : (
+              <div className="w-full max-w-md bg-white p-8 rounded-2xl shadow-2xl border-4 border-gray-900 mb-8 relative overflow-hidden">
+                <div className="absolute top-0 left-0 w-full h-3 bg-pink-600"></div>
+                <div className="text-6xl mb-4 text-center">💊</div>
+                <h3 className="text-xl font-bold text-center text-gray-800 mb-4 font-mono">
+                  R<span className="text-pink-600">x</span> #
+                  {Math.floor(Math.random() * 1000)}
+                </h3>
+                <p className="text-lg text-slate-700 leading-relaxed text-center font-bold">
+                  {currentTip}
+                </p>
+                <div className="mt-6 pt-6 border-t border-gray-100 text-center">
+                  <p className="text-xs text-slate-400">
+                    適用對象：{selectedState?.name}的媽咪
+                  </p>
+                  <p className="text-xs text-slate-400 mt-1">
+                    針對怪獸：{selectedChild?.name}
+                  </p>
+                </div>
+              </div>
+            )}
+
+            <div className="flex flex-col gap-3 w-full max-w-xs">
+              <button
+                onClick={handleShare}
+                className="w-full bg-gray-800 hover:bg-gray-900 text-white py-3 rounded-xl font-bold shadow-lg transition active:translate-y-1 flex justify-center items-center gap-2"
+              >
+                <Icons.Share size={18} />
+                <span>分享給戰友</span>
+              </button>
+
+              <button
+                onClick={handleDraw}
+                disabled={isAnimating}
+                className="w-full bg-pink-600 hover:bg-pink-700 text-white py-3 rounded-xl font-bold shadow-lg transition active:translate-y-1 disabled:opacity-50 flex justify-center items-center gap-2"
+              >
+                <Icons.RefreshCw size={18} />
+                <span>這個我不行，重抽一張</span>
+              </button>
+
+              <button
+                onClick={() => {
+                  setStep(0);
+                  setSelectedChild(null);
+                  setSelectedState(null);
+                  window.scrollTo(0, 0);
+                }}
+                className="w-full bg-gray-200 hover:bg-gray-300 text-gray-700 py-3 rounded-xl font-bold transition flex items-center justify-center gap-2"
+              >
+                <Icons.Wine size={18} />
+                <span>回到首頁 (或去喝酒)</span>
+              </button>
+            </div>
+
+            <p className="mt-8 text-xs text-gray-400 text-center max-w-xs leading-relaxed">
+              * 本遊戲無法取代專業治療，但能提供短暫的逃避與歡樂。
+              <br />
+              妳是好媽媽，真的。
+            </p>
+          </div>
+        );
+
+        return (
+          <div className="min-h-screen bg-gray-50 font-sans text-gray-900 selection:bg-pink-200 selection:text-pink-900">
+            <div className="max-w-md mx-auto min-h-screen shadow-2xl bg-white relative overflow-hidden">
+              {step > 0 && (
+                <div className="h-1 bg-gray-100 w-full">
+                  <div
+                    className="h-full bg-pink-600 transition-all duration-500"
+                    style={{ width: `${(step / 4) * 100}%` }}
+                  ></div>
+                </div>
+              )}
+
+              <div className="p-4">
+                {step === 0 && renderWelcome()}
+                {step === 1 && renderStep1()}
+                {step === 2 && renderStep2()}
+                {step === 3 && renderStep3()}
+                {step === 4 && renderStep4()}
+              </div>
+
+              {showToast && (
+                <div className="fixed bottom-8 left-1/2 -translate-x-1/2 bg-gray-900 text-white px-6 py-3 rounded-full shadow-lg z-50 animate-in fade-in slide-in-from-bottom-2">
+                  📋 連結已複製！快去傳給崩潰的媽媽戰友們！
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      }
+
+      // 啟動 React
+      const root = ReactDOM.createRoot(document.getElementById('root'));
+      root.render(<App />);
+    </script>
+  </body>
+</html>
